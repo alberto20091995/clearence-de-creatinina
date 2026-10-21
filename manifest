@@ -1,0 +1,19 @@
+{
+  "timeZone": "America/Argentina/Buenos_Aires",
+  "dependencies": {
+  },
+  "exceptionLogging": "STACKDRIVER",
+  "oauthScopes": ["https://www.googleapis.com/auth/drive"],
+  "runtimeVersion": "V8",
+  "addOns": {
+    "common": {
+      "name": "CLEARANCE",
+      "logoUrl": "https://github.com/alberto20091995/clearence-de-creatinina/blob/main/riñon2.png?raw=true"
+    },
+    "drive": {
+      "homepageTrigger": {
+        "runFunction": "onHomepage"
+      }
+    }
+  }
+}
