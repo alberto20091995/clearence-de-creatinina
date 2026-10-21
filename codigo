@@ -1,0 +1,128 @@
+function onHomepage(e) {
+  return createCalculatorCard("", "", "", "", "", null, null);
+}
+
+function onDriveItemsSelected(e) {
+  return createCalculatorCard("", "", "", "", "", null, null);
+}
+
+function parseNumeroLimpio(valorStr) {
+  if (!valorStr) return { textoLimpio: "", valorNum: 0 };
+  var limpio = valorStr.toString().replace(/,/g, '.').replace(/[^0-9.]/g, '');
+  var partes = limpio.split('.');
+  if (partes.length > 2) {
+    limpio = partes[0] + '.' + partes.slice(1).join('');
+  }
+  var num = parseFloat(limpio);
+  return {
+    textoLimpio: limpio,
+    valorNum: isNaN(num) ? 0 : num
+  };
+}
+
+function createCalculatorCard(peso, altura, volumen, creaOrina, creaSangre, sc, clearance) {
+  var card = CardService.newCardBuilder();
+  
+  var section = CardService.newCardSection()
+      .setHeader("Clearance de Creatinina en 24hs");
+
+  section.addWidget(
+    CardService.newTextInput()
+      .setFieldName("peso")
+      .setTitle("Peso (kg)")
+      .setValue(peso)
+      .setHint("Ej: 70 o 70,5")
+  );
+
+  section.addWidget(
+    CardService.newTextInput()
+      .setFieldName("altura")
+      .setTitle("Altura (cm)")
+      .setValue(altura)
+      .setHint("Ej: 170")
+  );
+
+  section.addWidget(
+    CardService.newTextInput()
+      .setFieldName("volumen")
+      .setTitle("Volumen de orina (mL)")
+      .setValue(volumen)
+      .setHint("Ej: 1500")
+  );
+
+  section.addWidget(
+    CardService.newTextInput()
+      .setFieldName("creaOrina")
+      .setTitle("Creatinina en orina (mg/dL)")
+      .setValue(creaOrina)
+      .setHint("Ej: 100")
+  );
+
+  section.addWidget(
+    CardService.newTextInput()
+      .setFieldName("creaSangre")
+      .setTitle("Creatinina en sangre (mg/dL)")
+      .setValue(creaSangre)
+      .setHint("Ej: 1.1 o 1,1")
+  );
+
+  var action = CardService.newAction()
+      .setFunctionName("calcularclearanceAction");
+
+  section.addWidget(
+    CardService.newTextButton()
+      .setText("Calcular")
+      .setOnClickAction(action)
+      .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
+  );
+
+  if (sc !== null && clearance !== null) {
+    section.addWidget(
+      CardService.newTextParagraph()
+        .setText( "<br><br><b>Clearance:</b> " + clearance.toFixed(2) + " mL/min<br>")
+        //.setText( "<b>Clearance:</b> " + clearance.toFixed(2) + " mL/min<br>"+ "<b>Superficie Corporal:</b> " + sc.toFixed(2) + " m²")
+    );
+  }
+
+  card.addSection(section);
+  return card.build();
+}
+
+function calcularclearanceAction(e) {
+  var pesoObj = parseNumeroLimpio(e.formInput.peso);
+  var alturaObj = parseNumeroLimpio(e.formInput.altura);
+  var volumenObj = parseNumeroLimpio(e.formInput.volumen);
+  var creaOrinaObj = parseNumeroLimpio(e.formInput.creaOrina);
+  var creaSangreObj = parseNumeroLimpio(e.formInput.creaSangre);
+
+  var peso = pesoObj.valorNum;
+  var altura = alturaObj.valorNum;
+  var volumen = volumenObj.valorNum;
+  var creaOrina = creaOrinaObj.valorNum;
+  var creaSangre = creaSangreObj.valorNum;
+
+  var sc = 0;
+  var clearance = 0;
+
+  if (peso > 0 && altura > 0) {
+    sc = 0.007184 * Math.pow(peso, 0.425) * Math.pow(altura, 0.725);
+  }
+
+  if (creaSangre > 0 && sc > 0 && volumen > 0 && creaOrina > 0) {
+    clearance = ((creaOrina * volumen) / (creaSangre * 1440)) * (1.73 / sc);
+  }
+
+  var card = createCalculatorCard(
+    pesoObj.textoLimpio,
+    alturaObj.textoLimpio,
+    volumenObj.textoLimpio,
+    creaOrinaObj.textoLimpio,
+    creaSangreObj.textoLimpio,
+    sc,
+    clearance
+  );
+
+  return CardService.newActionResponseBuilder()
+      .setNavigation(CardService.newNavigation().updateCard(card))
+      .build();
+}
